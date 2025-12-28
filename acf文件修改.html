@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="zh-Hans">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ACF 读取/修改小工具</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+    :root {
+      --bg-gradient-start: #f8fafc;
+      --bg-gradient-end: #eef2ff;
+      --card-bg: rgba(255, 255, 255, 0.7);
+      --card-border: rgba(99, 102, 241, 0.1);
+      --card-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
+      --input-bg: rgba(255, 255, 255, 0.9);
+      --input-border: rgba(99, 102, 241, 0.15);
+      --input-focus: rgba(99, 102, 241, 0.3);
+      --btn-gradient-start: #6366f1;
+      --btn-gradient-end: #8b5cf6;
+      --btn-hover-start: #4f46e5;
+      --btn-hover-end: #7c3aed;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --accent-ok: #10b981;
+      --accent-warn: #f59e0b;
+      --table-header-bg: rgba(99, 102, 241, 0.04);
+      color-scheme: light dark;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-gradient-start: #0f172a;
+        --bg-gradient-end: #1e1b4b;
+        --card-bg: rgba(30, 41, 59, 0.7);
+        --card-border: rgba(129, 140, 248, 0.15);
+        --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        --input-bg: rgba(30, 41, 59, 0.8);
+        --input-border: rgba(129, 140, 248, 0.2);
+        --input-focus: rgba(129, 140, 248, 0.4);
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --table-header-bg: rgba(129, 140, 248, 0.08);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      margin: 0;
+      padding: 32px;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      background: linear-gradient(135deg, var(--btn-gradient-start), var(--btn-gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12);
+    }
+
+    .row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .fieldRow {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input[type="text"],
+    input[type="datetime-local"] {
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text-primary);
+      font-size: 14px;
+      min-width: 240px;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    input[type="text"]:hover,
+    input[type="datetime-local"]:hover {
+      border-color: var(--input-focus);
+    }
+
+    input[type="text"]:focus,
+    input[type="datetime-local"]:focus {
+      border-color: var(--btn-gradient-start);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    input[type="datetime-local"] {
+      min-width: 220px;
+    }
+
+    input[type="file"] {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    input[type="file"]::file-selector-button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, var(--btn-gradient-start), var(--btn-gradient-end));
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-right: 12px;
+      transition: all 0.2s ease;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+      background: linear-gradient(135deg, var(--btn-hover-start), var(--btn-hover-end));
+    }
+
+    button {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--btn-gradient-start), var(--btn-gradient-end));
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+    }
+
+    button:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--btn-hover-start), var(--btn-hover-end));
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 16px;
+    }
+
+    th {
+      background: var(--table-header-bg);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    th:first-child {
+      border-radius: 12px 0 0 12px;
+    }
+
+    th:last-child {
+      border-radius: 0 12px 12px 0;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    td input {
+      width: 100%;
+      min-width: 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    td input:focus {
+      outline: none;
+      border-color: var(--btn-gradient-start);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    td button {
+      padding: 8px 14px;
+      font-size: 13px;
+      background: linear-gradient(135deg, #ef4444, #f87171);
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+    }
+
+    td button:hover:not(:disabled) {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
+    }
+
+    .muted {
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 240px;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text-primary);
+      font-family: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--btn-gradient-start);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--table-header-bg);
+      border: 1px solid var(--card-border);
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .ok {
+      color: var(--accent-ok);
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .warn {
+      color: var(--accent-warn);
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    code {
+      background: var(--table-header-bg);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    /* Smooth scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.2);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.3);
+    }
+
+    /* Footer Styles */
+    .footer {
+      text-align: center;
+      padding: 32px 20px;
+      margin-top: 40px;
+      border-top: 1px solid var(--card-border);
+      position: relative;
+    }
+
+    .footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--btn-gradient-start), var(--btn-gradient-end), transparent);
+    }
+
+    .footer-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      letter-spacing: 0.3px;
+    }
+
+    .footer-divider {
+      width: 4px;
+      height: 4px;
+      background: linear-gradient(135deg, var(--btn-gradient-start), var(--btn-gradient-end));
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+
+    .footer-highlight {
+      background: linear-gradient(135deg, var(--btn-gradient-start), var(--btn-gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 500;
+    }
+
+    .footer-icon {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>ACF 读取/修改小工具 🧸🛠️</h2>
+  <p class="muted">
+    读取本地 .acf（Steam KeyValues），把你关心的字段拎出来给你改，然后导出新的 .acf。<br />
+    小提醒：先备份原文件，避免手滑把 buildid 改成外星文 👽。
+  </p>
+
+  <div class="card">
+    <div class="row">
+      <label>
+        选择 .acf 文件
+        <input id="file" type="file" accept=".acf,.txt" />
+      </label>
+      <span id="status" class="pill warn">未加载</span>
+      <button id="btnApply" disabled>应用修改到预览</button>
+      <button id="btnDownload" disabled>下载修改后的 ACF</button>
+    </div>
+    <div class="muted" style="margin-top:10px;">
+      根节点：<span id="rootKey" class="pill">-</span>
+      <span style="margin-left:8px;">（通常是 <code>"AppState"</code>）</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 10px 0;">基础字段</h3>
+    <div class="row">
+      <label>StateFlags
+        <input id="StateFlags" type="text" placeholder="例如 4" />
+      </label>
+
+      <label>buildid
+        <input id="buildid" type="text" placeholder="例如 1234567" />
+      </label>
+    </div>
+
+    <p class="muted">
+      注意：ACF 里数字通常也会用字符串存（双引号包住），本工具会按字符串写回。
+    </p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 10px 0;">时间戳字段 <span style="font-weight:400; opacity:0.7;">(For Fun 🎮)</span></h3>
+    <div class="row">
+      <label>LastUpdated
+        <div class="fieldRow">
+          <input id="LastUpdated" type="text" placeholder="时间戳（秒/毫秒都可）" />
+          <input id="LastUpdated_dt" type="datetime-local" />
+        </div>
+        <div class="muted">日期：<span id="LastUpdated_human" class="pill">-</span></div>
+      </label>
+
+      <label>LastPlayed
+        <div class="fieldRow">
+          <input id="LastPlayed" type="text" placeholder="时间戳（秒/毫秒都可）" />
+          <input id="LastPlayed_dt" type="datetime-local" />
+        </div>
+        <div class="muted">日期：<span id="LastPlayed_human" class="pill">-</span></div>
+      </label>
+    </div>
+
+    <p class="muted">
+      时间戳支持秒/毫秒自动识别：长度≥13 视为毫秒，否则当秒处理。
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content: space-between;">
+      <h3 style="margin:0;">InstalledDepots（manifest / size）</h3>
+      <div class="row">
+        <button id="btnAddDepot" disabled>新增一行 depot</button>
+      </div>
+    </div>
+
+    <table id="depotsTable">
+      <thead>
+        <tr>
+          <th style="width: 18%;">DepotID</th>
+          <th>manifest</th>
+          <th style="width: 20%;">size</th>
+          <th style="width: 10%;">操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <p class="muted">
+      这里会列出 <code>"InstalledDepots"</code> 下所有 depot。你可以改 manifest/size，也可以新增一行。<br />
+      （它是那种“你说改哪就改哪”的表格小助手 🧚）
+    </p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 10px 0;">预览（将被导出的内容）</h3>
+    <textarea id="preview" spellcheck="false" placeholder="加载后会出现内容…"></textarea>
+    <p class="muted">
+      你也可以直接在这里手改，然后直接下载。<br />
+      如果你点“应用修改到预览”，表单内容会覆盖写回并刷新预览（表单优先）。
+    </p>
+  </div>
+
+  <script>
+    /**
+     * Valve KeyValues / ACF Parser + Stringifier
+     * - 支持 "key" "value" 和 "key" { ... }
+     * - 支持 // 行注释 与 /* 块注释 *\/
+     * - 若遇到重复 key，会变成数组（写回时会重复输出）
+     */
+
+    function tokenizeKV(text) {
+      const tokens = [];
+      let i = 0;
+
+      const isWS = c => c === ' ' || c === '\t' || c === '\n' || c === '\r';
+      const peek = (n = 0) => text[i + n];
+      const next = () => text[i++];
+
+      function skipWSAndComments() {
+        while (i < text.length) {
+          if (isWS(peek())) { i++; continue; }
+
+          if (peek() === '/' && peek(1) === '/') {
+            i += 2;
+            while (i < text.length && peek() !== '\n') i++;
+            continue;
+          }
+
+          if (peek() === '/' && peek(1) === '*') {
+            i += 2;
+            while (i < text.length && !(peek() === '*' && peek(1) === '/')) i++;
+            if (i < text.length) i += 2;
+            continue;
+          }
+
+          break;
+        }
+      }
+
+      function readQuoted() {
+        next(); // "
+        let out = '';
+        while (i < text.length) {
+          const c = next();
+          if (c === '\\') {
+            const n = next();
+            if (n === 'n') out += '\n';
+            else if (n === 't') out += '\t';
+            else if (n === 'r') out += '\r';
+            else out += n;
+            continue;
+          }
+          if (c === '"') break;
+          out += c;
+        }
+        return out;
+      }
+
+      function readBare() {
+        let out = '';
+        while (i < text.length) {
+          const c = peek();
+          if (isWS(c) || c === '{' || c === '}') break;
+          out += next();
+        }
+        return out;
+      }
+
+      while (i < text.length) {
+        skipWSAndComments();
+        if (i >= text.length) break;
+
+        const c = peek();
+        if (c === '{' || c === '}') {
+          tokens.push({ type: c, value: c });
+          i++;
+          continue;
+        }
+        if (c === '"') {
+          const s = readQuoted();
+          tokens.push({ type: 'string', value: s });
+          continue;
+        }
+
+        const b = readBare();
+        if (b.length) tokens.push({ type: 'string', value: b });
+      }
+
+      return tokens;
+    }
+
+    function parseKV(text) {
+      const tokens = tokenizeKV(text);
+      let idx = 0;
+
+      const peek = () => tokens[idx];
+      const consume = () => tokens[idx++];
+
+      function setKey(obj, k, v) {
+        if (Object.prototype.hasOwnProperty.call(obj, k)) {
+          if (Array.isArray(obj[k])) obj[k].push(v);
+          else obj[k] = [obj[k], v];
+        } else {
+          obj[k] = v;
+        }
+      }
+
+      function parseObject() {
+        const obj = {};
+        while (idx < tokens.length) {
+          const t = peek();
+          if (!t) break;
+
+          if (t.type === '}') { consume(); break; }
+
+          if (t.type !== 'string') {
+            consume();
+            continue;
+          }
+
+          const key = consume().value;
+          const n = peek();
+          if (!n) { setKey(obj, key, ""); break; }
+
+          if (n.type === '{') {
+            consume(); // {
+            const child = parseObject();
+            setKey(obj, key, child);
+          } else if (n.type === 'string') {
+            const val = consume().value;
+            setKey(obj, key, val);
+          } else {
+            consume();
+            setKey(obj, key, "");
+          }
+        }
+        return obj;
+      }
+
+      const root = {};
+      while (idx < tokens.length) {
+        const t = peek();
+        if (!t) break;
+        if (t.type !== 'string') { consume(); continue; }
+
+        const key = consume().value;
+        const n = peek();
+        if (n && n.type === '{') {
+          consume();
+          const child = parseObject();
+          root[key] = child;
+        } else if (n && n.type === 'string') {
+          root[key] = consume().value;
+        } else {
+          root[key] = "";
+        }
+      }
+      return root;
+    }
+
+    function escapeKV(s) {
+      return String(s)
+        .replace(/\\/g, "\\\\")
+        .replace(/"/g, '\\"')
+        .replace(/\r/g, "\\r")
+        .replace(/\n/g, "\\n")
+        .replace(/\t/g, "\\t");
+    }
+
+    function stringifyKV(obj, indentLevel = 0) {
+      const pad = () => "  ".repeat(indentLevel);
+      const lines = [];
+
+      const entries = Object.entries(obj);
+
+      for (const [k, v] of entries) {
+        if (Array.isArray(v)) {
+          for (const item of v) {
+            if (item && typeof item === "object") {
+              lines.push(`${pad()}"${escapeKV(k)}"`);
+              lines.push(`${pad()}{`);
+              lines.push(stringifyKV(item, indentLevel + 1));
+              lines.push(`${pad()}}`);
+            } else {
+              lines.push(`${pad()}"${escapeKV(k)}"\t\t"${escapeKV(item)}"`);
+            }
+          }
+          continue;
+        }
+
+        if (v && typeof v === "object") {
+          lines.push(`${pad()}"${escapeKV(k)}"`);
+          lines.push(`${pad()}{`);
+          lines.push(stringifyKV(v, indentLevel + 1));
+          lines.push(`${pad()}}`);
+        } else {
+          lines.push(`${pad()}"${escapeKV(k)}"\t\t"${escapeKV(v)}"`);
+        }
+      }
+
+      return lines.join("\n");
+    }
+
+    // case-insensitive key lookup on one object level
+    function findKeyCI(obj, want) {
+      if (!obj || typeof obj !== "object") return null;
+      const w = want.toLowerCase();
+      for (const k of Object.keys(obj)) {
+        if (String(k).toLowerCase() === w) return k;
+      }
+      return null;
+    }
+
+    function getSingleRootKey(root) {
+      const keys = Object.keys(root || {});
+      if (keys.length === 1) return keys[0];
+      const app = findKeyCI(root, "AppState");
+      if (app) return app;
+      return keys[0] || null;
+    }
+
+    /* ---------- 时间戳 <-> 日期 自动转换 ---------- */
+    function pad2(n) { return String(n).padStart(2, "0"); }
+
+    function formatLocal(date) {
+      return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+    }
+
+    // datetime-local 不带秒，这里按分钟填
+    function toDatetimeLocalValue(date) {
+      return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+    }
+
+    function parseUnixToMs(tsStr) {
+      const s = String(tsStr ?? "").trim();
+      if (!s) return null;
+      if (!/^\d+$/.test(s)) return null;
+      const num = Number(s);
+      if (!Number.isFinite(num)) return null;
+      // 13位及以上，按毫秒；否则按秒
+      if (s.length >= 13) return num;
+      return num * 1000;
+    }
+
+    function syncFromTimestamp(tsEl, dtEl, humanEl) {
+      const ms = parseUnixToMs(tsEl.value);
+      if (ms === null) {
+        dtEl.value = "";
+        humanEl.textContent = "-";
+        return;
+      }
+      const d = new Date(ms);
+      if (Number.isNaN(d.getTime())) {
+        dtEl.value = "";
+        humanEl.textContent = "-";
+        return;
+      }
+      dtEl.value = toDatetimeLocalValue(d);
+      humanEl.textContent = formatLocal(d);
+    }
+
+    function syncFromDatetime(dtEl, tsEl, humanEl) {
+      const v = String(dtEl.value ?? "").trim();
+      if (!v) {
+        tsEl.value = "";
+        humanEl.textContent = "-";
+        return;
+      }
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) {
+        tsEl.value = "";
+        humanEl.textContent = "-";
+        return;
+      }
+      const sec = Math.floor(d.getTime() / 1000);
+      tsEl.value = String(sec);
+      humanEl.textContent = formatLocal(d);
+    }
+
+    /* ---------------- UI logic ---------------- */
+    const elFile = document.getElementById("file");
+    const elStatus = document.getElementById("status");
+    const elRootKey = document.getElementById("rootKey");
+    const elStateFlags = document.getElementById("StateFlags");
+
+    const elLastUpdated = document.getElementById("LastUpdated");
+    const elLastUpdatedDt = document.getElementById("LastUpdated_dt");
+    const elLastUpdatedHuman = document.getElementById("LastUpdated_human");
+
+    const elLastPlayed = document.getElementById("LastPlayed");
+    const elLastPlayedDt = document.getElementById("LastPlayed_dt");
+    const elLastPlayedHuman = document.getElementById("LastPlayed_human");
+
+    const elBuildid = document.getElementById("buildid");
+    const elApply = document.getElementById("btnApply");
+    const elDownload = document.getElementById("btnDownload");
+    const elAddDepot = document.getElementById("btnAddDepot");
+    const elPreview = document.getElementById("preview");
+    const tbody = document.querySelector("#depotsTable tbody");
+
+    let loadedFileName = "modified.acf";
+    let kvRoot = null;
+    let rootKey = null;
+    let appObj = null;
+    let keyMap = null;
+
+    function setStatus(ok, text) {
+      elStatus.textContent = text;
+      elStatus.classList.remove("ok", "warn");
+      elStatus.classList.add(ok ? "ok" : "warn");
+    }
+
+    function clearDepotsTable() {
+      tbody.innerHTML = "";
+    }
+
+    function depotRow(depotId = "", manifest = "", size = "") {
+      const tr = document.createElement("tr");
+
+      const tdId = document.createElement("td");
+      const inpId = document.createElement("input");
+      inpId.type = "text";
+      inpId.value = depotId;
+      inpId.placeholder = "例如 123456";
+      tdId.appendChild(inpId);
+
+      const tdMan = document.createElement("td");
+      const inpMan = document.createElement("input");
+      inpMan.type = "text";
+      inpMan.value = manifest;
+      inpMan.placeholder = "manifest";
+      tdMan.appendChild(inpMan);
+
+      const tdSize = document.createElement("td");
+      const inpSize = document.createElement("input");
+      inpSize.type = "text";
+      inpSize.value = size;
+      inpSize.placeholder = "size";
+      tdSize.appendChild(inpSize);
+
+      const tdOp = document.createElement("td");
+      const btnDel = document.createElement("button");
+      btnDel.textContent = "删除";
+      btnDel.addEventListener("click", () => tr.remove());
+      tdOp.appendChild(btnDel);
+
+      tr.appendChild(tdId);
+      tr.appendChild(tdMan);
+      tr.appendChild(tdSize);
+      tr.appendChild(tdOp);
+
+      return tr;
+    }
+
+    function populateFormFromKV() {
+      keyMap = {
+        StateFlags: findKeyCI(appObj, "StateFlags") || "StateFlags",
+        LastUpdated: findKeyCI(appObj, "LastUpdated") || "LastUpdated",
+        LastPlayed: findKeyCI(appObj, "LastPlayed") || "LastPlayed",
+        buildid: findKeyCI(appObj, "buildid") || "buildid",
+        InstalledDepots: findKeyCI(appObj, "InstalledDepots") || "InstalledDepots"
+      };
+
+      elStateFlags.value = appObj[keyMap.StateFlags] ?? "";
+      elLastUpdated.value = appObj[keyMap.LastUpdated] ?? "";
+      elLastPlayed.value = appObj[keyMap.LastPlayed] ?? "";
+      elBuildid.value = appObj[keyMap.buildid] ?? "";
+
+      // 同步日期显示
+      syncFromTimestamp(elLastUpdated, elLastUpdatedDt, elLastUpdatedHuman);
+      syncFromTimestamp(elLastPlayed, elLastPlayedDt, elLastPlayedHuman);
+
+      clearDepotsTable();
+      const depotsKey = keyMap.InstalledDepots;
+      if (!appObj[depotsKey] || typeof appObj[depotsKey] !== "object") {
+        appObj[depotsKey] = {};
+      }
+
+      const depotsObj = appObj[depotsKey];
+      for (const depotId of Object.keys(depotsObj)) {
+        const depotBlock = depotsObj[depotId];
+        if (!depotBlock || typeof depotBlock !== "object") continue;
+
+        const manKey = findKeyCI(depotBlock, "manifest") || "manifest";
+        const sizeKey = findKeyCI(depotBlock, "size") || "size";
+
+        const manifest = depotBlock[manKey] ?? "";
+        const size = depotBlock[sizeKey] ?? "";
+
+        tbody.appendChild(depotRow(depotId, manifest, size));
+      }
+    }
+
+    function applyFormToKV() {
+      appObj[keyMap.StateFlags] = String(elStateFlags.value ?? "");
+      appObj[keyMap.LastUpdated] = String(elLastUpdated.value ?? "");
+      appObj[keyMap.LastPlayed] = String(elLastPlayed.value ?? "");
+      appObj[keyMap.buildid] = String(elBuildid.value ?? "");
+
+      const depotsKey = keyMap.InstalledDepots;
+      if (!appObj[depotsKey] || typeof appObj[depotsKey] !== "object") {
+        appObj[depotsKey] = {};
+      }
+      const newDepots = {};
+
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      for (const tr of rows) {
+        const inputs = tr.querySelectorAll("input");
+        const depotId = (inputs[0].value || "").trim();
+        const manifest = (inputs[1].value || "").trim();
+        const size = (inputs[2].value || "").trim();
+        if (!depotId) continue;
+
+        newDepots[depotId] = { manifest, size };
+      }
+
+      appObj[depotsKey] = newDepots;
+      elPreview.value = stringifyKV(kvRoot, 0) + "\n";
+    }
+
+    function downloadText(filename, text) {
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    /* 时间戳/日期 双向联动（带防抖小护栏，避免互相触发无限循环） */
+    let syncing = false;
+
+    function bindTsDt(tsEl, dtEl, humanEl) {
+      tsEl.addEventListener("input", () => {
+        if (syncing) return;
+        syncing = true;
+        syncFromTimestamp(tsEl, dtEl, humanEl);
+        syncing = false;
+      });
+
+      dtEl.addEventListener("change", () => {
+        if (syncing) return;
+        syncing = true;
+        syncFromDatetime(dtEl, tsEl, humanEl);
+        // 顺手再把 dt 正规化一次（比如浏览器可能丢秒）
+        syncFromTimestamp(tsEl, dtEl, humanEl);
+        syncing = false;
+      });
+    }
+
+    bindTsDt(elLastUpdated, elLastUpdatedDt, elLastUpdatedHuman);
+    bindTsDt(elLastPlayed, elLastPlayedDt, elLastPlayedHuman);
+
+    elFile.addEventListener("change", async () => {
+      const f = elFile.files && elFile.files[0];
+      if (!f) return;
+
+      loadedFileName = f.name; // 保持原文件名不变
+      const text = await f.text();
+
+      try {
+        kvRoot = parseKV(text);
+        rootKey = getSingleRootKey(kvRoot);
+        if (!rootKey) throw new Error("未找到根节点 key");
+        elRootKey.textContent = rootKey;
+
+        appObj = kvRoot[rootKey];
+        if (!appObj || typeof appObj !== "object") {
+          throw new Error("根节点不是对象块，无法编辑");
+        }
+
+        populateFormFromKV();
+        elPreview.value = stringifyKV(kvRoot, 0) + "\n";
+
+        elApply.disabled = false;
+        elDownload.disabled = false;
+        elAddDepot.disabled = false;
+        setStatus(true, "已加载 ✅");
+      } catch (e) {
+        console.error(e);
+        setStatus(false, "解析失败 ❌");
+        elRootKey.textContent = "-";
+        elPreview.value = "";
+        clearDepotsTable();
+        elApply.disabled = true;
+        elDownload.disabled = true;
+        elAddDepot.disabled = true;
+        alert("解析失败：\n" + (e?.message || e));
+      }
+    });
+
+    elApply.addEventListener("click", () => {
+      if (!kvRoot || !appObj) return;
+      applyFormToKV();
+      setStatus(true, "已应用到预览 ✅");
+    });
+
+    elDownload.addEventListener("click", () => {
+      if (!kvRoot) return;
+      const out = elPreview.value || (stringifyKV(kvRoot, 0) + "\n");
+      downloadText(loadedFileName, out);
+    });
+
+    elAddDepot.addEventListener("click", () => {
+      tbody.appendChild(depotRow("", "", ""));
+    });
+  </script>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <span class="footer-icon">✨</span>
+      <span>Crafted with creativity by <span class="footer-highlight">Bluerain</span></span>
+      <span class="footer-divider"></span>
+      <span>Powered by <span class="footer-highlight">Claude 4.5 Opus</span></span>
+      <span class="footer-icon">🤖</span>
+    </div>
+  </footer>
+</body>
+
+</html>
