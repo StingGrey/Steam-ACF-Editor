@@ -416,6 +416,11 @@
   <div class="card">
     <h3 style="margin:0 0 10px 0;">基础字段</h3>
     <div class="row">
+      <label>游戏名称 (name)
+        <input id="name" type="text" placeholder="游戏名称" style="min-width: 320px;" />
+      </label>
+    </div>
+    <div class="row" style="margin-top: 12px;">
       <label>StateFlags
         <input id="StateFlags" type="text" placeholder="例如 4" />
       </label>
@@ -771,6 +776,7 @@
     const elFile = document.getElementById("file");
     const elStatus = document.getElementById("status");
     const elRootKey = document.getElementById("rootKey");
+    const elName = document.getElementById("name");
     const elStateFlags = document.getElementById("StateFlags");
 
     const elLastUpdated = document.getElementById("LastUpdated");
@@ -844,6 +850,7 @@
 
     function populateFormFromKV() {
       keyMap = {
+        name: findKeyCI(appObj, "name") || "name",
         StateFlags: findKeyCI(appObj, "StateFlags") || "StateFlags",
         LastUpdated: findKeyCI(appObj, "LastUpdated") || "LastUpdated",
         LastPlayed: findKeyCI(appObj, "LastPlayed") || "LastPlayed",
@@ -851,6 +858,7 @@
         InstalledDepots: findKeyCI(appObj, "InstalledDepots") || "InstalledDepots"
       };
 
+      elName.value = appObj[keyMap.name] ?? "";
       elStateFlags.value = appObj[keyMap.StateFlags] ?? "";
       elLastUpdated.value = appObj[keyMap.LastUpdated] ?? "";
       elLastPlayed.value = appObj[keyMap.LastPlayed] ?? "";
@@ -882,6 +890,7 @@
     }
 
     function applyFormToKV() {
+      appObj[keyMap.name] = String(elName.value ?? "");
       appObj[keyMap.StateFlags] = String(elStateFlags.value ?? "");
       appObj[keyMap.LastUpdated] = String(elLastUpdated.value ?? "");
       appObj[keyMap.LastPlayed] = String(elLastPlayed.value ?? "");
